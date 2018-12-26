@@ -11,7 +11,7 @@ fork by [here](https://github.com/emmtltd/aliyun-php-sdk)
 ## Installing
 
 ```shell
-$ composer require emmtltd/aliyun-php-sdk:~1.0
+$ composer require emmtltd/aliyun-php-sdk
 ```
 
 
