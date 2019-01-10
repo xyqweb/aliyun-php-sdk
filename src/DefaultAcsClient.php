@@ -105,11 +105,12 @@ class DefaultAcsClient implements IAcsClient
             $domain = EndpointProvider::findProductDomain($request->getRegionId(), $request->getProduct());
         }
 
-        if (null == $domain) {
-            throw new ClientException("Can not find endpoint to access.", "SDK.InvalidRegionId");
-        }
-        $requestUrl = $request->composeUrl($iSigner, $credential, $domain);
+		if (null == $domain) {
 
+		    throw new ClientException("Can not find endpoint to access.", "SDK.InvalidRegionId");
+
+		}
+        $requestUrl = $request->composeUrl($iSigner, $credential, $domain);
         if ($this->__urlTestFlag__) {
             throw new ClientException($requestUrl, "URLTestFlagIsSet");
         }
