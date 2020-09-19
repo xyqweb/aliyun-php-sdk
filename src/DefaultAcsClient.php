@@ -39,20 +39,24 @@ class DefaultAcsClient implements IAcsClient
     private $locationService;
     private $ramRoleArnService;
     private $ecsRamRoleService;
-    
-    public function __construct($iClientProfile)
+    private $proxy = [];
+
+    public function __construct($iClientProfile, array $proxy = [])
     {
         $this->iClientProfile = $iClientProfile;
         $this->__urlTestFlag__ = false;
-        $this->locationService = new LocationService($this->iClientProfile);
+        if (!empty($proxy) && isset($proxy['host']) && !empty($proxy['host']) && isset($proxy['port']) && is_numeric($proxy['port'])) {
+            $this->proxy = $proxy;
+        }
+        $this->locationService = new LocationService($this->iClientProfile, $this->proxy);
         if ($this->iClientProfile->isRamRoleArn()) {
-            $this->ramRoleArnService = new RamRoleArnService($this->iClientProfile);
+            $this->ramRoleArnService = new RamRoleArnService($this->iClientProfile, $this->proxy);
         }
         if ($this->iClientProfile->isEcsRamRole()) {
-            $this->ecsRamRoleService = new EcsRamRoleService($this->iClientProfile);
+            $this->ecsRamRoleService = new EcsRamRoleService($this->iClientProfile, $this->proxy);
         }
     }
-    
+
     public function getAcsResponse($request, $iSigner = null, $credential = null, $autoRetry = true, $maxRetryNumber = 3)
     {
         /**
@@ -99,7 +103,7 @@ class DefaultAcsClient implements IAcsClient
         if (null != $request->getLocationServiceCode())
         {
             $domain = $this->locationService->findProductDomain($request->getRegionId(), $request->getLocationServiceCode(), $request->getLocationEndpointType(), $request->getProduct());
-        }       
+        }
         if ($domain == null)
         {
             $domain = EndpointProvider::findProductDomain($request->getRegionId(), $request->getProduct());
@@ -116,31 +120,31 @@ class DefaultAcsClient implements IAcsClient
         }
 
         if (count($request->getDomainParameter())>0) {
-            $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), $request->getDomainParameter(), $request->getHeaders());
+            $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), $request->getDomainParameter(), $request->getHeaders(),$this->proxy);
         } else {
-            $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), $request->getContent(), $request->getHeaders());
+            $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), $request->getContent(), $request->getHeaders(),$this->proxy);
         }
-        
+
         $retryTimes = 1;
         while (500 <= $httpResponse->getStatus() && $autoRetry && $retryTimes < $maxRetryNumber) {
             $requestUrl = $request->composeUrl($iSigner, $credential, $domain);
 
             if (count($request->getDomainParameter())>0) {
-                $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), $request->getDomainParameter(), $request->getHeaders());
+                $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), $request->getDomainParameter(), $request->getHeaders(),$this->proxy);
             } else {
-                $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), $request->getContent(), $request->getHeaders());
+                $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), $request->getContent(), $request->getHeaders(),$this->proxy);
             }
             $retryTimes ++;
         }
         return $httpResponse;
     }
-    
+
     public function doAction($request, $iSigner = null, $credential = null, $autoRetry = true, $maxRetryNumber = 3)
     {
         trigger_error("doAction() is deprecated. Please use getAcsResponse() instead.", E_USER_NOTICE);
         return $this->doActionImpl($request, $iSigner, $credential, $autoRetry, $maxRetryNumber);
     }
-    
+
     private function prepareRequest($request)
     {
         /**
@@ -157,13 +161,13 @@ class DefaultAcsClient implements IAcsClient
         }
         return $request;
     }
-    
-    
+
+
     private function buildApiException($respObject, $httpStatus)
     {
         throw new ServerException($respObject->Message, $respObject->Code, $httpStatus, $respObject->RequestId);
     }
-    
+
     private function parseAcsResponse($body, $format)
     {
         if ("JSON" == $format) {

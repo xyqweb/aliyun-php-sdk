@@ -54,10 +54,12 @@ class LocationService
     public static $cache = array();
     public static $lastClearTimePerProduct = array();
     public static $serviceDomain = LOCATION_SERVICE_DOMAIN;
+    private $proxy = null;
 
-    function __construct($clientProfile)
+    function __construct($clientProfile, $proxy= [])
     {
         $this->clientProfile = $clientProfile;
+        $this->proxy = $proxy;
     }
 
     public function findProductDomain($regionId, $serviceCode, $endPointType, $product)
@@ -114,7 +116,7 @@ class LocationService
 
         $requestUrl = $request->composeUrl($signer, $credential, self::$serviceDomain);
 
-        $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), null, $request->getHeaders());
+        $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), null, $request->getHeaders(), $this->proxy);
 
         if (!$httpResponse->isSuccess()) {
             return null;

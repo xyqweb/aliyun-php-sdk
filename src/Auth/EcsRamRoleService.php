@@ -30,9 +30,12 @@ class EcsRamRoleService
     private $clientProfile;
     private $lastClearTime = null;
     private $sessionCredential = null;
+    private $proxy = null;
 
-    function __construct(IClientProfile $clientProfile) {
+    function __construct(IClientProfile $clientProfile, $proxy = [])
+    {
         $this->clientProfile = $clientProfile;
+        $this->proxy = $proxy;
     }
 
     public function getSessionCredential()
@@ -66,7 +69,7 @@ class EcsRamRoleService
 
         $requestUrl = "http://100.100.100.200/latest/meta-data/ram/security-credentials/".$ecsRamRoleCredential->getRoleName();
 
-        $httpResponse = HttpHelper::curl($requestUrl, "GET", null, null);
+        $httpResponse = HttpHelper::curl($requestUrl, "GET", null, null, $this->proxy);
         if (!$httpResponse->isSuccess())
         {
             return null;

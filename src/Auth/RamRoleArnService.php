@@ -51,9 +51,11 @@ class RamRoleArnService
     private $lastClearTime = null;
     private $sessionCredential = null;
     public static $serviceDomain = STS_DOMAIN;
+    private $proxy = null;
 
-    function __construct(IClientProfile $clientProfile) {
+    function __construct(IClientProfile $clientProfile, $proxy = []) {
         $this->clientProfile = $clientProfile;
+        $this->proxy = $proxy;
     }
 
     public function getSessionCredential()
@@ -90,7 +92,7 @@ class RamRoleArnService
 
         $requestUrl = $request->composeUrl($signer, $ramRoleArnCredential, self::$serviceDomain);
 
-        $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), null, $request->getHeaders());
+        $httpResponse = HttpHelper::curl($requestUrl, $request->getMethod(), null, $request->getHeaders(), $this->proxy);
 
         if (!$httpResponse->isSuccess())
         {

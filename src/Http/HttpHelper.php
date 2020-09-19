@@ -23,17 +23,18 @@ use Emmetltd\AliyunCore\Exception\ClientException;
 
 class HttpHelper
 {
-    public static $connectTimeout = 30;//30 second
-    public static $readTimeout = 80;//80 second
+    public static $connectTimeout = 2;//2 second
+    public static $readTimeout = 10;//10 second
     
-    public static function curl($url, $httpMethod = "GET", $postFields = null, $headers = null)
+    public static function curl($url, $httpMethod = "GET", $postFields = null, $headers = null, $proxy = [])
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $httpMethod);
-        if (ENABLE_HTTP_PROXY) {
+
+        if (!empty($proxy) && isset($proxy['host']) && '0.0.0.0' != $proxy['host'] && isset($proxy['port']) && '0' != $proxy['port']) {
             curl_setopt($ch, CURLOPT_PROXYAUTH, CURLAUTH_BASIC);
-            curl_setopt($ch, CURLOPT_PROXY, HTTP_PROXY_IP);
-            curl_setopt($ch, CURLOPT_PROXYPORT, HTTP_PROXY_PORT);
+            curl_setopt($ch, CURLOPT_PROXY, $proxy['host']);
+            curl_setopt($ch, CURLOPT_PROXYPORT, $proxy['port']);
             curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
         }
         curl_setopt($ch, CURLOPT_URL, $url);
