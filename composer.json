@@ -26,5 +26,5 @@
             "src/Auth/RamRoleArnService.php",
             "src/Regions/LocationService.php"
         ]
-    },
+    }
 }
